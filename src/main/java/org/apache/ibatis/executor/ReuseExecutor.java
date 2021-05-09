@@ -37,7 +37,7 @@ import org.apache.ibatis.transaction.Transaction;
  * @author Clinton Begin
  */
 public class ReuseExecutor extends BaseExecutor {
-
+  /** 可重用的执行器内部用了一个map，用来缓存SQL语句对应的Statement，即key为SQL */
   private final Map<String, Statement> statementMap = new HashMap<>();
 
   public ReuseExecutor(Configuration configuration, Transaction transaction) {
@@ -47,7 +47,9 @@ public class ReuseExecutor extends BaseExecutor {
   @Override
   public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Configuration configuration = ms.getConfiguration();
+    // 新建一个StatementHandler
     StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
+    // 准备语句
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
     return handler.update(stmt);
   }
@@ -73,18 +75,22 @@ public class ReuseExecutor extends BaseExecutor {
     for (Statement stmt : statementMap.values()) {
       closeStatement(stmt);
     }
+    // flush的时候清除缓存
     statementMap.clear();
     return Collections.emptyList();
   }
 
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
+    // 得到绑定的SQL语句
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
+    // 如果缓存中已经有了Statement，直接获取
     if (hasStatementFor(sql)) {
       stmt = getStatement(sql);
       applyTransactionTimeout(stmt);
     } else {
+      // 如果没有，prepare一个放入缓存
       Connection connection = getConnection(statementLog);
       stmt = handler.prepare(connection, transaction.getTimeout());
       putStatement(sql, stmt);

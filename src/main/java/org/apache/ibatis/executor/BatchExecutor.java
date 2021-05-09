@@ -41,10 +41,13 @@ import org.apache.ibatis.transaction.Transaction;
 public class BatchExecutor extends BaseExecutor {
 
   public static final int BATCH_UPDATE_RETURN_VALUE = Integer.MIN_VALUE + 1002;
-
+  /** 批量执行的Statement对象 **/
   private final List<Statement> statementList = new ArrayList<>();
+  /** 批量执行的结果对象 **/
   private final List<BatchResult> batchResultList = new ArrayList<>();
+  /** 上一次处理的SQL语句 **/
   private String currentSql;
+  /** 上一次处理的MappedStatement对象 **/
   private MappedStatement currentStatement;
 
   public BatchExecutor(Configuration configuration, Transaction transaction) {
@@ -56,16 +59,22 @@ public class BatchExecutor extends BaseExecutor {
     final Configuration configuration = ms.getConfiguration();
     final StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, RowBounds.DEFAULT, null, null);
     final BoundSql boundSql = handler.getBoundSql();
+    // 获取SQL语句
     final String sql = boundSql.getSql();
     final Statement stmt;
+    // 判断当前要处理的sql语句是否等于上一次执行的sql，MappedStatement也是同理
+    // 只有这两个对象都满足时，才能复用上一次的Statement对象
     if (sql.equals(currentSql) && ms.equals(currentStatement)) {
       int last = statementList.size() - 1;
+      // 即使满足上述的两个条件，也只能从statement缓存list中获取最后一个对象，相同的sql还必须满足连贯顺序才能复用上一次的Statement对象
       stmt = statementList.get(last);
       applyTransactionTimeout(stmt);
       handler.parameterize(stmt);// fix Issues 322
       BatchResult batchResult = batchResultList.get(last);
       batchResult.addParameterObject(parameterObject);
     } else {
+      // 创建和保存新的Statement对象和BatchResult对象
+      // 并将当前sql和MappedStatement设置为该次执行的对应对象
       Connection connection = getConnection(ms.getStatementLog());
       stmt = handler.prepare(connection, transaction.getTimeout());
       handler.parameterize(stmt);    // fix Issues 322
@@ -120,6 +129,7 @@ public class BatchExecutor extends BaseExecutor {
         applyTransactionTimeout(stmt);
         BatchResult batchResult = batchResultList.get(i);
         try {
+          // 执行并记录批量执行的数量
           batchResult.setUpdateCounts(stmt.executeBatch());
           MappedStatement ms = batchResult.getMappedStatement();
           List<Object> parameterObjects = batchResult.getParameterObjects();

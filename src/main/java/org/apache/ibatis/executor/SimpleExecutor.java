@@ -78,6 +78,7 @@ public class SimpleExecutor extends BaseExecutor {
 
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) {
+    // doFlushStatements 只是给 batch 用的，所以这里返回空
     return Collections.emptyList();
   }
 

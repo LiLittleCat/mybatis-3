@@ -1,17 +1,17 @@
 /**
- *    Copyright 2009-2020 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2020 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.executor;
 
@@ -50,15 +50,15 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
 public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
-
+  /** 事务管理接口、定义了与JDBC执行相关的功能，如获取连接、提交、回滚、关闭连接等操作 */
   protected Transaction transaction;
   protected Executor wrapper;
-
+  /** 下方三个对象均是与一级缓存相关的属性, 作用域为 BaseExecutor 的生命周期范围 */
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
   protected PerpetualCache localCache;
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
-
+  /** 与动态sql中的嵌套子查询相关 */
   protected int queryStack;
   private boolean closed;
 
@@ -80,6 +80,9 @@ public abstract class BaseExecutor implements Executor {
     return transaction;
   }
 
+  /**
+   * 关闭当前对象、关闭之前判断是否需要回滚
+   */
   @Override
   public void close(boolean forceRollback) {
     try {
@@ -144,27 +147,33 @@ public abstract class BaseExecutor implements Executor {
       throw new ExecutorException("Executor was closed.");
     }
     if (queryStack == 0 && ms.isFlushCacheRequired()) {
+      // 如果不是嵌套查询，并且配置了flushCache为true，清空一级缓存
       clearLocalCache();
     }
     List<E> list;
     try {
       queryStack++;
+      // 如果resultHandler为空，尝试从一级缓存中获取数据
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
+        // 与存储过程相关（CallableStatement）
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        // 一级缓存中没有对应数据，从数据库查询
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
       queryStack--;
     }
     if (queryStack == 0) {
+      // 延迟装载相关逻辑
       for (DeferredLoad deferredLoad : deferredLoads) {
         deferredLoad.load();
       }
       // issue #601
       deferredLoads.clear();
       if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
+        // 如果全局配置的一级缓存作用域为Statement，清除本地缓存，因此一级缓存无法被关闭，只是减少范围至每一个Statement
         // issue #482
         clearLocalCache();
       }
@@ -190,7 +199,7 @@ public abstract class BaseExecutor implements Executor {
       deferredLoads.add(new DeferredLoad(resultObject, property, key, localCache, configuration, targetType));
     }
   }
-
+  /** 创建CacheKey逻辑，主要与mappedStatement的ID，参数，分页参数和sql有关 */
   @Override
   public CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql) {
     if (closed) {
@@ -258,7 +267,9 @@ public abstract class BaseExecutor implements Executor {
       }
     }
   }
-
+  /**
+   * 清空本地缓存、在BaseExecutor中，update、query、commit、rollback方法中，均有调用回滚的逻辑
+   */
   @Override
   public void clearLocalCache() {
     if (!closed) {
@@ -266,17 +277,17 @@ public abstract class BaseExecutor implements Executor {
       localOutputParameterCache.clear();
     }
   }
-
+  /** 执行更新操作 */
   protected abstract int doUpdate(MappedStatement ms, Object parameter) throws SQLException;
-
+  /** 执行Statement，填充结果、与批量执行相关 */
   protected abstract List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException;
-
+  /** 执行查询操作 */
   protected abstract <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql)
       throws SQLException;
 
   protected abstract <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql)
       throws SQLException;
-
+  /** 关闭Statement对象 */
   protected void closeStatement(Statement statement) {
     if (statement != null) {
       try {
@@ -317,15 +328,18 @@ public abstract class BaseExecutor implements Executor {
       }
     }
   }
-
+  /** 查询数据库 */
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    // 插入key和占位符，为一级缓存做准备
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
+      // 调用子类实现的方法查询
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
       localCache.removeObject(key);
     }
+    // 查询结果保存到缓存中
     localCache.putObject(key, list);
     if (ms.getStatementType() == StatementType.CALLABLE) {
       localOutputParameterCache.putObject(key, parameter);
