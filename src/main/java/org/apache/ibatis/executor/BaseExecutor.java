@@ -15,14 +15,6 @@
  */
 package org.apache.ibatis.executor;
 
-import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.cache.impl.PerpetualCache;
 import org.apache.ibatis.cursor.Cursor;
@@ -30,11 +22,7 @@ import org.apache.ibatis.executor.statement.StatementUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.logging.jdbc.ConnectionLogger;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMapping;
-import org.apache.ibatis.mapping.ParameterMode;
-import org.apache.ibatis.mapping.StatementType;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.Configuration;
@@ -44,21 +32,32 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
+
 /**
  * @author Clinton Begin
  */
 public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
-  /** 事务管理接口、定义了与JDBC执行相关的功能，如获取连接、提交、回滚、关闭连接等操作 */
+  // 事务管理接口、定义了与JDBC执行相关的功能，如获取连接、提交、回滚、关闭连接等操作
   protected Transaction transaction;
   protected Executor wrapper;
-  /** 下方三个对象均是与一级缓存相关的属性, 作用域为 BaseExecutor 的生命周期范围 */
+  // 下方三个对象均是与一级缓存相关的属性, 作用域为 BaseExecutor 的生命周期范围
+  // 延迟加载队列（线程安全）
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  // 本地缓存机制（Local Cache）防止循环引用（circular references）和加速重复嵌套查询(一级缓存)
   protected PerpetualCache localCache;
+  // 本地输出参数缓存
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
-  /** 与动态sql中的嵌套子查询相关 */
+  // 查询堆栈，与动态sql中的嵌套子查询相关
   protected int queryStack;
   private boolean closed;
 
@@ -69,6 +68,7 @@ public abstract class BaseExecutor implements Executor {
     this.localOutputParameterCache = new PerpetualCache("LocalOutputParameterCache");
     this.closed = false;
     this.configuration = configuration;
+    // TODO 为啥这里要设置 wrapper 为自己
     this.wrapper = this;
   }
 
@@ -110,13 +110,16 @@ public abstract class BaseExecutor implements Executor {
     return closed;
   }
 
+  // SqlSession.update/insert/delete会调用此方法，增删改都是 SqlSession.update() 方法，查是 SqlSession.selectList()
   @Override
   public int update(MappedStatement ms, Object parameter) throws SQLException {
     ErrorContext.instance().resource(ms.getResource()).activity("executing an update").object(ms.getId());
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 先清除一级缓存
     clearLocalCache();
+    // 具体更新逻辑交给子类实现（模板方法）
     return doUpdate(ms, parameter);
   }
 
@@ -269,6 +272,10 @@ public abstract class BaseExecutor implements Executor {
   }
   /**
    * 清空本地缓存、在BaseExecutor中，update、query、commit、rollback方法中，均有调用回滚的逻辑
+   * @see org.apache.ibatis.executor.BaseExecutor#update(MappedStatement, Object)
+   * @see org.apache.ibatis.executor.BaseExecutor#query(MappedStatement, Object, RowBounds, ResultHandler)
+   * @see org.apache.ibatis.executor.BaseExecutor#commit(boolean)
+   * @see org.apache.ibatis.executor.BaseExecutor#rollback(boolean)
    */
   @Override
   public void clearLocalCache() {

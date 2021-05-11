@@ -111,6 +111,15 @@ public class Configuration {
   protected boolean useColumnLabel = true;
   /**
    * 是否开启二级缓存，开启后直接使用 CacheExecutor
+   * <p>
+   * 具体参阅：
+   * {@link org.apache.ibatis.session.Configuration#newExecutor(Transaction transaction, ExecutorType executorType)}
+   * 中
+   * <pre>
+   * if (cacheEnabled) {
+   *   executor = new CachingExecutor(executor);
+   * }
+   * </pre>
    */
   protected boolean cacheEnabled = true;
   protected boolean callSettersOnNulls;
@@ -681,6 +690,7 @@ public class Configuration {
     } else {
       executor = new SimpleExecutor(this, transaction);
     }
+    // 如果开启了全局缓存，用 CachingExecutor 装饰 BaseExecutor
     if (cacheEnabled) {
       executor = new CachingExecutor(executor);
     }

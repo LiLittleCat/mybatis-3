@@ -16,11 +16,13 @@
 package org.apache.ibatis.executor;
 
 /**
+ * @see https://blog.csdn.net/lqzkcx3/article/details/84944285
  * @author Clinton Begin
  */
 public class ErrorContext {
-
+  // 将执行上下文信息的收集独立出来并集中到一处
   private static final String LINE_SEPARATOR = System.lineSeparator();
+  // 正是因为使用了ThreadLocal<T>, 我们就能直接取到之前执行本SQL的线程上的信息, 也就很方便的构建出异常发生时的上下文，快速排错。
   private static final ThreadLocal<ErrorContext> LOCAL = ThreadLocal.withInitial(ErrorContext::new);
 
   private ErrorContext stored;
