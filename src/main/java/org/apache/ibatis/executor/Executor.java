@@ -28,6 +28,11 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 执行器
+ *
+ * 基本 API：改、查、缓存维护、事务管理
+ * 辅助 API：提交、关闭执行器，批处理刷新
+ *
  * @author Clinton Begin
  */
 public interface Executor {

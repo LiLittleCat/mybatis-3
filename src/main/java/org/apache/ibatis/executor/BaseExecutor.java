@@ -41,6 +41,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
 
 /**
+ * 处理 Executor 的共性（一级缓存维护，事务管理）
+ *
  * @author Clinton Begin
  */
 public abstract class BaseExecutor implements Executor {

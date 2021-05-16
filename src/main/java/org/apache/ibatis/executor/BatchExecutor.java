@@ -36,18 +36,23 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 批处理执行器
+ * 批处理提交修改，必须执行 flushStatements() 才会生效，即使 SqlSessionFactory.openSession(Executor.BATCH, true) autoCommit 设置为 true
+ *
+ * 执行 SQL 时 1.SQL 相同；2.MappedStatement 相同；3.并且 sql 连续；则使用同一个 JDBC Statement
+ *
  * @author Jeff Butler
  */
 public class BatchExecutor extends BaseExecutor {
 
   public static final int BATCH_UPDATE_RETURN_VALUE = Integer.MIN_VALUE + 1002;
-  /** 批量执行的Statement对象 **/
+  // 批量执行的 Statement 对象
   private final List<Statement> statementList = new ArrayList<>();
-  /** 批量执行的结果对象 **/
+  // 批量执行的结果对象
   private final List<BatchResult> batchResultList = new ArrayList<>();
-  /** 上一次处理的SQL语句 **/
+  // 上一次处理的 SQL 语句
   private String currentSql;
-  /** 上一次处理的MappedStatement对象 **/
+  // 上一次处理的 MappedStatement 对象
   private MappedStatement currentStatement;
 
   public BatchExecutor(Configuration configuration, Transaction transaction) {
@@ -59,22 +64,22 @@ public class BatchExecutor extends BaseExecutor {
     final Configuration configuration = ms.getConfiguration();
     final StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, RowBounds.DEFAULT, null, null);
     final BoundSql boundSql = handler.getBoundSql();
-    // 获取SQL语句
+    // 获取 SQL 语句
     final String sql = boundSql.getSql();
     final Statement stmt;
-    // 判断当前要处理的sql语句是否等于上一次执行的sql，MappedStatement也是同理
-    // 只有这两个对象都满足时，才能复用上一次的Statement对象
+    // 判断当前要处理的 sql 语句是否等于上一次执行的 sql，MappedStatement 也是同理
+    // 只有这两个对象都满足时，才能复用上一次的 Statement 对象
     if (sql.equals(currentSql) && ms.equals(currentStatement)) {
       int last = statementList.size() - 1;
-      // 即使满足上述的两个条件，也只能从statement缓存list中获取最后一个对象，相同的sql还必须满足连贯顺序才能复用上一次的Statement对象
+      // 即使满足上述的两个条件，也只能从 statement 缓存 list 中获取最后一个对象，相同的 sql 还必须满足连贯顺序才能复用上一次的 Statement 对象
       stmt = statementList.get(last);
       applyTransactionTimeout(stmt);
       handler.parameterize(stmt);// fix Issues 322
       BatchResult batchResult = batchResultList.get(last);
       batchResult.addParameterObject(parameterObject);
     } else {
-      // 创建和保存新的Statement对象和BatchResult对象
-      // 并将当前sql和MappedStatement设置为该次执行的对应对象
+      // 创建和保存新的 Statement 对象和 BatchResult 对象
+      // 并将当前 sql 和 MappedStatement 设置为该次执行的对应对象
       Connection connection = getConnection(ms.getStatementLog());
       stmt = handler.prepare(connection, transaction.getTimeout());
       handler.parameterize(stmt);    // fix Issues 322
@@ -117,6 +122,7 @@ public class BatchExecutor extends BaseExecutor {
     return cursor;
   }
 
+  // 执行此方法时才会执行 Statement.executeBatch()
   @Override
   public List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException {
     try {
@@ -124,6 +130,7 @@ public class BatchExecutor extends BaseExecutor {
       if (isRollback) {
         return Collections.emptyList();
       }
+      // 遍历 statementList，拿到每个 Statement
       for (int i = 0, n = statementList.size(); i < n; i++) {
         Statement stmt = statementList.get(i);
         applyTransactionTimeout(stmt);

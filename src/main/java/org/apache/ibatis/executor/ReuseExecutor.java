@@ -34,10 +34,13 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 重用执行器
+ * 相同的 SQL 只进行一次预处理，在一次会话中一次预处理重复使用
+ *
  * @author Clinton Begin
  */
 public class ReuseExecutor extends BaseExecutor {
-  /** 可重用的执行器内部用了一个map，用来缓存SQL语句对应的Statement，即key为SQL */
+  // 可重用的执行器内部用了一个map，用来缓存 SQL 语句对应的 Statement，key 为 SQL
   private final Map<String, Statement> statementMap = new HashMap<>();
 
   public ReuseExecutor(Configuration configuration, Transaction transaction) {
@@ -47,7 +50,7 @@ public class ReuseExecutor extends BaseExecutor {
   @Override
   public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Configuration configuration = ms.getConfiguration();
-    // 新建一个StatementHandler
+    // 新建一个 StatementHandler
     StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
     // 准备语句
     Statement stmt = prepareStatement(handler, ms.getStatementLog());
@@ -82,15 +85,15 @@ public class ReuseExecutor extends BaseExecutor {
 
   private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
-    // 得到绑定的SQL语句
+    // 得到绑定的 SQL 语句
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
-    // 如果缓存中已经有了Statement，直接获取
+    // 如果缓存中已经有了 Statement，直接获取
     if (hasStatementFor(sql)) {
       stmt = getStatement(sql);
       applyTransactionTimeout(stmt);
     } else {
-      // 如果没有，prepare一个放入缓存
+      // 如果没有，prepare 一个放入缓存
       Connection connection = getConnection(statementLog);
       stmt = handler.prepare(connection, transaction.getTimeout());
       putStatement(sql, stmt);

@@ -32,6 +32,9 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 简单执行器
+ * 每一条执行的 SQL 都进行一次预处理
+ *
  * @author Clinton Begin
  */
 public class SimpleExecutor extends BaseExecutor {
