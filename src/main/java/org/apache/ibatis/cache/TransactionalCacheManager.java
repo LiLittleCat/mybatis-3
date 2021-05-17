@@ -25,7 +25,7 @@ import org.apache.ibatis.util.MapUtil;
  * @author Clinton Begin
  */
 public class TransactionalCacheManager {
-
+  // 二级缓存暂存区，个数取决于用了多少缓存，有多少 mapper
   private final Map<Cache, TransactionalCache> transactionalCaches = new HashMap<>();
 
   public void clear(Cache cache) {
