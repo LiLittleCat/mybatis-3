@@ -53,6 +53,8 @@ public class SerializedCache implements Cache {
   @Override
   public void putObject(Object key, Object object) {
     if (object == null || object instanceof Serializable) {
+      // 二级缓存可跨线程使用，避免两个线程拿到同一个对象，一个线程修改对象之后影响另一个线程使用
+      // 序列化之后每个线程都反序列化成一个对象，互不干扰
       delegate.putObject(key, serialize((Serializable) object));
     } else {
       throw new CacheException("SharedCache failed to make a copy of a non-serializable object: " + object);

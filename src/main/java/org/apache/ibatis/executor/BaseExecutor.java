@@ -285,7 +285,7 @@ public abstract class BaseExecutor implements Executor {
     }
   }
   /**
-   * 清空本地缓存、在BaseExecutor中，update、query、commit、rollback方法中，均有调用回滚的逻辑
+   * 清空本地缓存、在BaseExecutor中，update、query、commit、rollback方法中，均有调用
    * @see org.apache.ibatis.executor.BaseExecutor#update(MappedStatement, Object)
    * @see org.apache.ibatis.executor.BaseExecutor#query(MappedStatement, Object, RowBounds, ResultHandler)
    * @see org.apache.ibatis.executor.BaseExecutor#commit(boolean)

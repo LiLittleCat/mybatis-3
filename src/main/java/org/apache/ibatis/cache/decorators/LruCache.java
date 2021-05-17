@@ -23,6 +23,8 @@ import org.apache.ibatis.cache.Cache;
 /**
  * Lru (least recently used) cache decorator.
  *
+ * 最近最少使用淘汰算法
+ *
  * @author Clinton Begin
  */
 public class LruCache implements Cache {
@@ -47,6 +49,7 @@ public class LruCache implements Cache {
   }
 
   public void setSize(final int size) {
+    // LinkedHashMap accessOrder 设为 true，每次获取将该元素放在末尾
     keyMap = new LinkedHashMap<Object, Object>(size, .75F, true) {
       private static final long serialVersionUID = 4267176411845948333L;
 
@@ -69,6 +72,7 @@ public class LruCache implements Cache {
 
   @Override
   public Object getObject(Object key) {
+    // 访问一下，将该元素放在末尾
     keyMap.get(key); // touch
     return delegate.getObject(key);
   }

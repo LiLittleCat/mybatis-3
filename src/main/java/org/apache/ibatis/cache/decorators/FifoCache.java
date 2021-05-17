@@ -74,8 +74,11 @@ public class FifoCache implements Cache {
   }
 
   private void cycleKeyList(Object key) {
+    // 添加到队列末尾
     keyList.addLast(key);
+    // 超出范围
     if (keyList.size() > size) {
+      // 删除第一个
       Object oldestKey = keyList.removeFirst();
       delegate.removeObject(oldestKey);
     }
