@@ -89,7 +89,7 @@ public class UnknownTypeHandler extends BaseTypeHandler<Object> {
       throws SQLException {
     return cs.getObject(columnIndex);
   }
-
+  // 根据参数类型 parameter.getClass() 获得对应的 typeHandler
   private TypeHandler<?> resolveTypeHandler(Object parameter, JdbcType jdbcType) {
     TypeHandler<?> handler;
     if (parameter == null) {

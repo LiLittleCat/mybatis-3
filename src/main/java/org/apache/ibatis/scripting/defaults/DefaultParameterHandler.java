@@ -73,6 +73,8 @@ public class DefaultParameterHandler implements ParameterHandler {
           } else if (parameterObject == null) {
             value = null;
           } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
+            // typeHandler 和参数类型匹配，即只有一个参数。
+            // typeHandler 都是处理基本类型的，当 parameterObject 只有一个时，才能找到对应的 typeHandler
             value = parameterObject;
           } else {
             MetaObject metaObject = configuration.newMetaObject(parameterObject);

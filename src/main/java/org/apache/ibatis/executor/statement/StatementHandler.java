@@ -26,7 +26,7 @@ import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.session.ResultHandler;
 
 /**
- * 声明处理器，对应 JDBC 中的 Statement
+ * 语句处理器，对应 JDBC 中的 Statement
  *
  * 参数处理，结果处理
  *
@@ -34,26 +34,27 @@ import org.apache.ibatis.session.ResultHandler;
  */
 public interface StatementHandler {
 
+  // 基于连接创建 Statement
   Statement prepare(Connection connection, Integer transactionTimeout)
       throws SQLException;
-
+  // 预处理参数
   void parameterize(Statement statement)
       throws SQLException;
-
+  // 批处理
   void batch(Statement statement)
       throws SQLException;
-
+  // 修改
   int update(Statement statement)
       throws SQLException;
-
+  // 查询，结果给 ResultHandler
   <E> List<E> query(Statement statement, ResultHandler resultHandler)
       throws SQLException;
-
+  // 查询游标
   <E> Cursor<E> queryCursor(Statement statement)
       throws SQLException;
-
+  // 获取动态 SQL
   BoundSql getBoundSql();
-
+  // 获取参数处理器
   ParameterHandler getParameterHandler();
 
 }
