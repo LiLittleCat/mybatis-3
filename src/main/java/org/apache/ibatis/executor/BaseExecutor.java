@@ -162,7 +162,7 @@ public abstract class BaseExecutor implements Executor {
     try {
       // 查询堆栈 + 1，递归调用本方法时上一步不会清除一级缓存（局部缓存）
       queryStack++;
-      // 如果resultHandler为空，尝试从一级缓存中根据 cacheKey 获取数据
+      // 如果 resultHandler 为空，尝试从一级缓存中根据 cacheKey 获取数据
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
         // 如果在一级缓存中查询到了，则处理 locallyCachedOutputParameters  与存储过程相关（CallableStatement）
