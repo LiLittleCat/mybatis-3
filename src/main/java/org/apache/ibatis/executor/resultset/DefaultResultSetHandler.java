@@ -1,4 +1,4 @@
-/**
+/*
  *    Copyright 2009-2021 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -1001,7 +1001,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
       return false;
     } else if (columnPrefix != null) {
       for (String columnName : rsw.getColumnNames()) {
-        if (columnName.toUpperCase().startsWith(columnPrefix.toUpperCase())) {
+        if (columnName.toUpperCase(Locale.ENGLISH).startsWith(columnPrefix.toUpperCase(Locale.ENGLISH))) {
           return true;
         }
       }
