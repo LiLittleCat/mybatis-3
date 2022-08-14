@@ -1,5 +1,5 @@
 /*
- *    Copyright 2009-2021 the original author or authors.
+ *    Copyright 2009-2022 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -126,6 +126,8 @@ public class Configuration {
   protected boolean useActualParamName = true;
   protected boolean returnInstanceForEmptyRow;
   protected boolean shrinkWhitespacesInSql;
+  protected boolean nullableOnForEach;
+  protected boolean argNameBasedConstructorAutoMapping;
 
   protected String logPrefix;
   protected Class<? extends Log> logImpl;
@@ -310,6 +312,36 @@ public class Configuration {
 
   public void setShrinkWhitespacesInSql(boolean shrinkWhitespacesInSql) {
     this.shrinkWhitespacesInSql = shrinkWhitespacesInSql;
+  }
+
+  /**
+   * Sets the default value of 'nullable' attribute on 'foreach' tag.
+   *
+   * @param nullableOnForEach If nullable, set to {@code true}
+   * @since 3.5.9
+   */
+  public void setNullableOnForEach(boolean nullableOnForEach) {
+    this.nullableOnForEach = nullableOnForEach;
+  }
+
+  /**
+   * Returns the default value of 'nullable' attribute on 'foreach' tag.
+   *
+   * <p>Default is {@code false}.
+   *
+   * @return If nullable, set to {@code true}
+   * @since 3.5.9
+   */
+  public boolean isNullableOnForEach() {
+    return nullableOnForEach;
+  }
+
+  public boolean isArgNameBasedConstructorAutoMapping() {
+    return argNameBasedConstructorAutoMapping;
+  }
+
+  public void setArgNameBasedConstructorAutoMapping(boolean argNameBasedConstructorAutoMapping) {
+    this.argNameBasedConstructorAutoMapping = argNameBasedConstructorAutoMapping;
   }
 
   public String getDatabaseId() {
@@ -682,7 +714,6 @@ public class Configuration {
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
     // 判断执行器类型，两次判断是否多余？
     executorType = executorType == null ? defaultExecutorType : executorType;
-    executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
     if (ExecutorType.BATCH == executorType) {
       executor = new BatchExecutor(this, transaction);

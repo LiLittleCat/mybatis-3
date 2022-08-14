@@ -1,5 +1,5 @@
 /*
- *    Copyright 2009-2021 the original author or authors.
+ *    Copyright 2009-2022 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ import org.apache.ibatis.type.EnumTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 class XmlConfigBuilderTest {
@@ -101,7 +102,9 @@ class XmlConfigBuilderTest {
       assertNull(config.getConfigurationFactory());
       assertThat(config.getTypeHandlerRegistry().getTypeHandler(RoundingMode.class)).isInstanceOf(EnumTypeHandler.class);
       assertThat(config.isShrinkWhitespacesInSql()).isFalse();
+      assertThat(config.isArgNameBasedConstructorAutoMapping()).isFalse();
       assertThat(config.getDefaultSqlProviderType()).isNull();
+      assertThat(config.isNullableOnForEach()).isFalse();
     }
   }
 
@@ -162,6 +165,7 @@ class XmlConfigBuilderTest {
     assertArrayEquals(MyEnum.values(), ((EnumOrderTypeHandler<MyEnum>) typeHandler).constants);
   }
 
+  @Tag("RequireIllegalAccess")
   @Test
   void shouldSuccessfullyLoadXMLConfigFile() throws Exception {
     String resource = "org/apache/ibatis/builder/CustomizedSettingsMapperConfig.xml";
@@ -197,7 +201,9 @@ class XmlConfigBuilderTest {
       assertThat(config.getVfsImpl().getName()).isEqualTo(JBoss6VFS.class.getName());
       assertThat(config.getConfigurationFactory().getName()).isEqualTo(String.class.getName());
       assertThat(config.isShrinkWhitespacesInSql()).isTrue();
+      assertThat(config.isArgNameBasedConstructorAutoMapping()).isTrue();
       assertThat(config.getDefaultSqlProviderType().getName()).isEqualTo(MySqlProvider.class.getName());
+      assertThat(config.isNullableOnForEach()).isTrue();
 
       assertThat(config.getTypeAliasRegistry().getTypeAliases().get("blogauthor")).isEqualTo(Author.class);
       assertThat(config.getTypeAliasRegistry().getTypeAliases().get("blog")).isEqualTo(Blog.class);

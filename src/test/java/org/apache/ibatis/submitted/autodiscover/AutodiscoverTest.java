@@ -1,5 +1,5 @@
 /*
- *    Copyright 2009-2021 the original author or authors.
+ *    Copyright 2009-2022 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.apache.ibatis.submitted.autodiscover;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Reader;
@@ -43,7 +44,7 @@ class AutodiscoverTest {
   @Test
   void testTypeAlias() {
     TypeAliasRegistry typeAliasRegistry = sqlSessionFactory.getConfiguration().getTypeAliasRegistry();
-    typeAliasRegistry.resolveAlias("testAlias");
+    assertNotNull(typeAliasRegistry.resolveAlias("testAlias"));
   }
 
   @Test

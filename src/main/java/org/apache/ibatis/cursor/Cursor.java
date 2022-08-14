@@ -1,5 +1,5 @@
 /*
- *    Copyright 2009-2021 the original author or authors.
+ *    Copyright 2009-2022 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.io.Closeable;
 
 /**
  * Cursor contract to handle fetching items lazily using an Iterator.
- * Cursors are a perfect fit to handle millions of items queries that would not normally fits in memory.
+ * Cursors are a perfect fit to handle millions of items queries that would not normally fit in memory.
  * If you use collections in resultMaps then cursor SQL queries must be ordered (resultOrdered="true")
  * using the id columns of the resultMap.
  *

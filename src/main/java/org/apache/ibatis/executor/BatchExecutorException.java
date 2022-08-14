@@ -1,5 +1,5 @@
 /*
- *    Copyright 2009-2021 the original author or authors.
+ *    Copyright 2009-2022 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class BatchExecutorException extends ExecutorException {
    * in the list for each successful sub-executor executed before the failing
    * executor.
    *
-   * @return the previously successful executor results (may be an empty list
+   * @return the previously successful executor results (maybe an empty list
    *         if no executor has executed successfully)
    */
   public List<BatchResult> getSuccessfulBatchResults() {
